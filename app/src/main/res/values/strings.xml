@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">AutoGrabber</string>
+    <string name="accessibility_description">Automates DoorDash offers and accepts and rejects them based on your filter preferences.</string>
+    <string name="instacart_accessibility_description">Automates Instacart batches and accepts and hides them based on your filter preferences.</string>
+</resources>

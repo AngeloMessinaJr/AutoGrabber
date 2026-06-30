@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault|flagIncludeNotImportantViews|flagRetrieveInteractiveWindows|flagReportViewIds"
+    android:canRetrieveWindowContent="true"
+    android:canPerformGestures="true"
+    android:notificationTimeout="100"
+    android:packageNames="com.amazon.flex.rabbit,com.amazon.rabbit,com.amazon.flex,com.amazon.flex.driver,com.amazon.flex.app,com.amazon.vxt.client,com.amazon.rabbit.amazonflex,com.amazon.rabbit.rabbit,com.amazon.flex.android,com.amazon.flex.rabbit.android,com.amazon.flex.driver.android,com.doordash.driverapp,com.dd.dasher,com.doordash.driver,com.dasher.driver,com.instacart.shopper" />
