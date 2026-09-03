@@ -25,7 +25,11 @@ export async function POST(request: Request) {
       integration_identifier: `autograbber_lifetime_${Math.random().toString(36).slice(2, 10)}`,
     })
     return NextResponse.json({ url: session.url })
-  } catch {
-    return NextResponse.json({ error: "Unable to start checkout." }, { status: 500 })
+  } catch (error) {
+    console.error("[v0] checkout session creation failed", error)
+    return NextResponse.json(
+      { error: "Unable to start checkout. Please try again." },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
+    )
   }
 }

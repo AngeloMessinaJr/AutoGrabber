@@ -174,8 +174,19 @@ function SubscriptionPortal({ uid, hasLifetimeAccess }: { uid: string; hasLifeti
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ uid }),
       })
-      const data = await response.json()
-      if (!response.ok || !data.url) throw new Error(data.error || "Unable to start checkout.")
+      const contentType = response.headers.get("content-type") ?? ""
+      const responseText = await response.text()
+      let data: { url?: string; error?: string } = {}
+      if (responseText && contentType.includes("application/json")) {
+        try {
+          data = JSON.parse(responseText)
+        } catch {
+          throw new Error("The checkout service returned an invalid response. Please try again.")
+        }
+      }
+      if (!response.ok || !data.url) {
+        throw new Error(data.error || (responseText ? "Unable to start checkout." : "The checkout service returned no response. Please try again."))
+      }
       window.location.assign(data.url)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to start checkout.")
