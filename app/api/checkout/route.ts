@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe"
 import { LIFETIME_PRODUCT } from "@/lib/products"
-import { adminAuth } from "@/lib/firebase-admin"
+import { getAdminAuth } from "@/lib/firebase-admin"
+
+export const runtime = "nodejs"
 
 export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get("authorization")
     const idToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null
     if (!idToken) return NextResponse.json({ error: "Authentication required." }, { status: 401 })
-    const token = await adminAuth.verifyIdToken(idToken)
+    const token = await getAdminAuth().verifyIdToken(idToken)
 
     const body = await request.json()
     if (body.uid && body.uid !== token.uid) return NextResponse.json({ error: "Invalid request." }, { status: 403 })

@@ -185,7 +185,7 @@ function SubscriptionPortal({ uid, hasLifetimeAccess }: { uid: string; hasLifeti
         }
       }
       if (!response.ok || !data.url) {
-        throw new Error(data.error || (responseText ? "Unable to start checkout." : "The checkout service returned no response. Please try again."))
+        throw new Error(data.error || `Checkout request failed (${response.status}). Please try again.`)
       }
       window.location.assign(data.url)
     } catch (err) {
