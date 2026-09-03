@@ -1,35 +1,42 @@
-import { NextResponse } from "next/server"
-import Stripe from "stripe"
-import { adminDb } from "@/lib/firebase-admin"
-import { stripe } from "@/lib/stripe"
+import { NextResponse } from "next/server";
+import Stripe from "stripe";
+import { adminDb } from "@/lib/firebaseAdmin"; // adjust if your path is different
 
-export async function POST(request: Request) {
-  const signature = request.headers.get("stripe-signature")
-  if (!signature) return new NextResponse("Missing signature", { status: 400 })
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
-  let event: Stripe.Event
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-06-20",
+});
+
+export async function POST(req: Request) {
   try {
-    event = stripe.webhooks.constructEvent(
-      await request.text(),
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!,
-    )
-  } catch {
-    return new NextResponse("Invalid signature", { status: 400 })
-  }
+    const rawBody = await req.text();
+    const signature = req.headers.get("stripe-signature");
 
-  if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
-    const session = event.data.object as Stripe.Checkout.Session
-    if (session.payment_status === "paid") {
-      const uid = session.metadata?.firebaseUid
-      if (uid) {
-        await adminDb.collection("users").doc(uid).set(
-          { hasLifetimeAccess: true, lifetimeAccessGrantedAt: new Date() },
-          { merge: true },
-        )
-      }
+    const event = stripe.webhooks.constructEvent(
+      rawBody,
+      signature!,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as any;
+
+      const uid = session.client_reference_id;
+
+      await adminDb
+        .collection("users")
+        .doc(uid)
+        .set({ hasLifetimeAccess: true }, { merge: true });
     }
-  }
 
-  return NextResponse.json({ received: true })
+    return NextResponse.json({ received: true });
+  } catch (err: any) {
+    console.error("Webhook error:", err);
+    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+  }
 }
