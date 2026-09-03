@@ -1,7 +1,7 @@
 "use client"
 
 import { doc, onSnapshot, setDoc } from "firebase/firestore"
-import { Bot, LogOut, Mail, Pencil, Phone, ShieldCheck, User as UserIcon, X } from "lucide-react"
+import { Bot, Check, CreditCard, LogOut, Mail, Pencil, Phone, ShieldCheck, User as UserIcon, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -13,6 +13,7 @@ type UserProfile = {
   fullName?: string
   phoneNumber?: string
   profilePictureUrl?: string
+  hasLifetimeAccess?: boolean
 }
 
 export default function AccountPage() {
@@ -52,6 +53,7 @@ export default function AccountPage() {
   const displayName = profile?.fullName || user.displayName || user.email?.split("@")[0] || "Driver"
   const initial = displayName.charAt(0).toUpperCase()
   const profilePictureUrl = profile?.profilePictureUrl
+  const hasLifetimeAccess = profile?.hasLifetimeAccess === true
   const joined = user.metadata?.creationTime
     ? new Date(user.metadata.creationTime).toLocaleDateString(undefined, {
         year: "numeric",
@@ -133,6 +135,8 @@ export default function AccountPage() {
           <InfoCard icon={<UserIcon className="size-4" />} label="Member since" value={joined} />
         </div>
 
+        <SubscriptionPortal uid={user.uid} hasLifetimeAccess={hasLifetimeAccess} />
+
         <div className="mt-8 rounded-2xl border border-white/8 bg-card/60 p-6 md:p-8">
           <h2 className="text-lg font-semibold text-white">Your download</h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -151,6 +155,51 @@ export default function AccountPage() {
         <EditProfileDialog uid={user.uid} profile={profile ?? {}} onClose={() => setEditing(false)} />
       )}
     </main>
+  )
+}
+
+function SubscriptionPortal({ uid, hasLifetimeAccess }: { uid: string; hasLifetimeAccess: boolean }) {
+  const { user } = useAuth()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function purchase() {
+    if (!user) return
+    setLoading(true)
+    setError(null)
+    try {
+      const token = await user.getIdToken()
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ uid }),
+      })
+      const data = await response.json()
+      if (!response.ok || !data.url) throw new Error(data.error || "Unable to start checkout.")
+      window.location.assign(data.url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to start checkout.")
+      setLoading(false)
+    }
+  }
+
+  return (
+    <section className="mt-8 rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-8" aria-labelledby="subscription-title">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-primary"><CreditCard className="size-4" aria-hidden="true" /><span className="text-xs font-semibold uppercase tracking-widest">Subscription</span></div>
+          <h2 id="subscription-title" className="mt-2 text-xl font-semibold text-white">Lifetime access</h2>
+          <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">Unlock every AutoGrabber feature with one secure, one-time payment.</p>
+        </div>
+        {hasLifetimeAccess ? (
+          <div className="flex shrink-0 items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary"><Check className="size-4" aria-hidden="true" /> Active</div>
+        ) : (
+          <button type="button" onClick={purchase} disabled={loading} className="shrink-0 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60">{loading ? "Opening checkout…" : "Unlock for $9.99"}</button>
+        )}
+      </div>
+      {!hasLifetimeAccess && <p className="mt-4 text-xs text-muted-foreground">One-time payment. No recurring charges.</p>}
+      {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
+    </section>
   )
 }
 
@@ -281,14 +330,19 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor: string; c
   )
 }
 
-function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function InfoCard({ icon, label, value, onEdit }: { icon: React.ReactNode; label: string; value: string; onEdit?: () => void }) {
   return (
     <div className="rounded-2xl border border-white/8 bg-card/60 p-5">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <span className="text-primary" aria-hidden="true">
-          {icon}
-        </span>
-        <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <span className="text-primary" aria-hidden="true">{icon}</span>
+          <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
+        </div>
+        {onEdit && (
+          <button type="button" onClick={onEdit} aria-label={`Edit ${label}`} className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-white/5 hover:text-white">
+            <Pencil className="size-3.5" aria-hidden="true" />
+          </button>
+        )}
       </div>
       <p className="mt-2 truncate text-sm font-medium text-white">{value}</p>
     </div>
