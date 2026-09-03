@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import type Stripe from "stripe"
-import { adminDb } from "@/lib/firebase-admin"
+import { getAdminDb } from "@/lib/firebase-admin"
+
+export const runtime = "nodejs"
 import { stripe } from "@/lib/stripe"
 
 export async function POST(request: Request) {
@@ -23,7 +25,7 @@ export async function POST(request: Request) {
       const session = event.data.object as Stripe.Checkout.Session
       const uid = session.metadata?.firebaseUid || session.client_reference_id
       if (uid && session.payment_status === "paid") {
-        await adminDb.collection("users").doc(uid).set(
+        await getAdminDb().collection("users").doc(uid).set(
           { hasLifetimeAccess: true },
           { merge: true },
         )
