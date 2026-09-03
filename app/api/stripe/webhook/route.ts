@@ -1,3 +1,8 @@
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { adminDb } from "@/lib/firebaseAdmin"; // adjust if your path is different
