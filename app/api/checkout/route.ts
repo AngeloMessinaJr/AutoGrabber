@@ -36,10 +36,10 @@ export async function POST(request: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${origin}/account?purchase=success`,
+      success_url: `${origin}/account?purchase=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/account?purchase=canceled`,
       client_reference_id: uid,
-      metadata: { firebaseUid: uid },
+      metadata: { userId: uid },
     })
     return NextResponse.json({ url: session.url })
   } catch (error) {

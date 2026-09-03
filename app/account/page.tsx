@@ -4,8 +4,8 @@ import { doc, onSnapshot, setDoc } from "firebase/firestore"
 import { Bot, Check, CreditCard, LogOut, Mail, Pencil, Phone, ShieldCheck, User as UserIcon, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { db } from "@/lib/firebase"
 
@@ -16,10 +16,12 @@ type UserProfile = {
   hasLifetimeAccess?: boolean
 }
 
-export default function AccountPage() {
+function AccountContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, loading, signOut } = useAuth()
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
 
   useEffect(() => {
@@ -36,6 +38,32 @@ export default function AccountPage() {
     })
     return () => unsubscribe()
   }, [user])
+
+  useEffect(() => {
+    const purchase = searchParams.get("purchase")
+    const sessionId = searchParams.get("session_id")
+    if (!user || loading || purchase !== "success" || !sessionId) return
+
+    let cancelled = false
+    async function verifyPurchase() {
+      try {
+        const token = await user!.getIdToken()
+        const response = await fetch("/api/checkout/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ session_id: sessionId }),
+        })
+        if (!response.ok) throw new Error("Payment verification failed")
+        if (!cancelled) setPurchaseMessage("Payment confirmed. Lifetime access is now active.")
+      } catch {
+        if (!cancelled) setPurchaseMessage("Payment received. Access will activate automatically once Stripe finishes processing.")
+      }
+    }
+    void verifyPurchase()
+    return () => {
+      cancelled = true
+    }
+  }, [loading, searchParams, user])
 
   async function handleSignOut() {
     await signOut()
@@ -135,6 +163,11 @@ export default function AccountPage() {
           <InfoCard icon={<UserIcon className="size-4" />} label="Member since" value={joined} />
         </div>
 
+        {purchaseMessage && (
+          <p role="status" className="mt-6 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary">
+            {purchaseMessage}
+          </p>
+        )}
         <SubscriptionPortal uid={user.uid} hasLifetimeAccess={hasLifetimeAccess} />
 
         <div className="mt-8 rounded-2xl border border-white/8 bg-card/60 p-6 md:p-8">
@@ -155,6 +188,14 @@ export default function AccountPage() {
         <EditProfileDialog uid={user.uid} profile={profile ?? {}} onClose={() => setEditing(false)} />
       )}
     </main>
+  )
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={<main className="flex min-h-dvh items-center justify-center"><p className="text-sm text-muted-foreground">Loading…</p></main>}>
+      <AccountContent />
+    </Suspense>
   )
 }
 
