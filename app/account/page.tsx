@@ -197,7 +197,7 @@ function AccountContent() {
           />
           </div>
           <div className="min-w-0">
-            <div className="self-start rounded-2xl border border-white/8 bg-card/60 p-5">
+            <div className="self-start w-full rounded-2xl border border-white/8 bg-card/60 p-5">
               <div className="flex items-center gap-2 text-muted-foreground"><span className="text-primary" aria-hidden="true"><Mail className="size-4" /></span><span className="text-xs font-medium uppercase tracking-wide">Email</span></div>
               <p className="mt-2 truncate text-sm font-medium text-white">{user.email || "—"}</p>
               <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1"><span className="text-xs text-muted-foreground">Verified: <span className="font-medium text-white">{emailVerified ? "Yes" : "No"}</span></span>{!emailVerified && <><button type="button" onClick={handleVerifyEmail} disabled={verificationBusy} className="text-xs font-semibold text-primary hover:underline disabled:opacity-60">{verificationBusy ? "Sending…" : "Verify email"}</button><button type="button" onClick={refreshVerificationStatus} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-white">Refresh status</button></>}</div>
@@ -456,7 +456,7 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor: string; c
 
 function InfoCard({ icon, label, value, onEdit, editContent }: { icon: React.ReactNode; label: string; value: string; onEdit?: () => void; editContent?: React.ReactNode }) {
   return (
-    <div className="self-start rounded-2xl border border-white/8 bg-card/60 p-5">
+    <div className="self-start w-full rounded-2xl border border-white/8 bg-card/60 p-5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-muted-foreground">
           <span className="text-primary" aria-hidden="true">{icon}</span>
