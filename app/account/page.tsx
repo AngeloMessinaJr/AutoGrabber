@@ -26,7 +26,7 @@ function AccountContent() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null)
-  const [editing, setEditing] = useState(false)
+  const [editingField, setEditingField] = useState<"fullName" | "phoneNumber" | "profilePicture" | null>(null)
   const [verificationBusy, setVerificationBusy] = useState(false)
   const [verificationMessage, setVerificationMessage] = useState<string | null>(null)
   const [emailVerified, setEmailVerified] = useState(false)
@@ -166,7 +166,7 @@ function AccountContent() {
             )}
             <button
               type="button"
-              onClick={() => setEditing(true)}
+              onClick={() => setEditingField("profilePicture")}
               aria-label="Edit profile picture"
               className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full border border-white/10 bg-neutral-900 text-white/80 transition-colors hover:bg-neutral-800 hover:text-white"
             >
@@ -184,14 +184,14 @@ function AccountContent() {
             icon={<UserIcon className="size-4" />}
             label="Full Name"
             value={profile?.fullName || user.displayName || "Not set"}
-            onEdit={() => setEditing(true)}
+            onEdit={() => setEditingField("fullName")}
           />
           <InfoCard icon={<Mail className="size-4" />} label="Email" value={user.email || "—"} />
           <InfoCard
             icon={<Phone className="size-4" />}
             label="Phone number"
             value={profile?.phoneNumber || "Not set"}
-            onEdit={() => setEditing(true)}
+            onEdit={() => setEditingField("phoneNumber")}
           />
           <div className="rounded-2xl border border-white/8 bg-card/60 p-5">
             <div className="flex items-center justify-between gap-2">
@@ -221,9 +221,9 @@ function AccountContent() {
 
       </div>
 
-      {editing && (
-        <EditProfileDialog uid={user.uid} profile={profile ?? {}} onClose={() => setEditing(false)} />
-      )}
+      {editingField === "fullName" && <InlineProfileField label="Full Name" value={profile?.fullName || user.displayName || ""} type="text" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { fullName: value }, { merge: true }); setEditingField(null) }} />}
+      {editingField === "phoneNumber" && <InlineProfileField label="Phone number" value={profile?.phoneNumber || ""} type="tel" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { phoneNumber: value }, { merge: true }); setEditingField(null) }} />}
+      {editingField === "profilePicture" && <InlineProfilePicture uid={user.uid} onClose={() => setEditingField(null)} />}
       {deleting && <DeleteAccountDialog email={user.email ?? ""} onClose={() => setDeleting(false)} onDelete={async (password) => { await deleteAccount(password); router.replace("/") }} />}
     </main>
   )
@@ -235,6 +235,22 @@ export default function AccountPage() {
       <AccountContent />
     </Suspense>
   )
+}
+
+function InlineProfileField({ label, value, type, onClose, onSave }: { label: string; value: string; type: "text" | "tel"; onClose: () => void; onSave: (value: string) => Promise<void> }) {
+  const [nextValue, setNextValue] = useState(value)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  async function submit(event: React.FormEvent) { event.preventDefault(); setSaving(true); setError(null); try { await onSave(nextValue.trim()) } catch { setError("Could not save changes. Please try again."); setSaving(false) } }
+  return <form onSubmit={submit} className="mt-3 flex flex-wrap items-center gap-2"><label htmlFor={`edit-${label}`} className="sr-only">Edit {label}</label><input id={`edit-${label}`} autoFocus type={type} value={nextValue} onChange={(event) => setNextValue(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-primary/50 bg-background px-3 py-2 text-sm text-white outline-none focus:border-primary" /><button type="submit" disabled={saving} className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-60">{saving ? "Saving…" : "Save"}</button><button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-white">Cancel</button>{error && <p role="alert" className="basis-full text-xs text-destructive">{error}</p>}</form>
+}
+
+function InlineProfilePicture({ uid, onClose }: { uid: string; onClose: () => void }) {
+  const [file, setFile] = useState<File | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  async function submit(event: React.FormEvent) { event.preventDefault(); if (!file) return setError("Choose an image first."); if (!file.type.startsWith("image/")) return setError("Please select an image file."); if (file.size > 5 * 1024 * 1024) return setError("Please select an image smaller than 5 MB."); setSaving(true); setError(null); try { const imageRef = ref(storage, `users/${uid}/profile-picture`); await uploadBytes(imageRef, file, { contentType: file.type }); const url = await getDownloadURL(imageRef); await setDoc(doc(db, "users", uid), { profilePictureUrl: url }, { merge: true }); onClose() } catch { setError("Could not upload picture. Please try again."); setSaving(false) } }
+  return <form onSubmit={submit} className="mt-3 flex flex-wrap items-center gap-2"><label htmlFor="profile-picture-upload" className="sr-only">Choose profile picture</label><input id="profile-picture-upload" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="min-w-0 flex-1 text-xs text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-foreground" /><button type="submit" disabled={saving} className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-60">{saving ? "Uploading…" : "Upload"}</button><button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-white">Cancel</button>{error && <p role="alert" className="basis-full text-xs text-destructive">{error}</p>}</form>
 }
 
 function SubscriptionPortal({ uid, hasLifetimeAccess }: { uid: string; hasLifetimeAccess: boolean }) {
