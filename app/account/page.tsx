@@ -2,7 +2,7 @@
 
 import { doc, onSnapshot, setDoc } from "firebase/firestore"
 import { reload, sendEmailVerification } from "firebase/auth"
-import { AlertTriangle, Bot, Check, CreditCard, LogOut, Mail, Pencil, Phone, ShieldCheck, User as UserIcon, X } from "lucide-react"
+import { AlertTriangle, Bot, Check, CreditCard, LogOut, Mail, Pencil, Phone, User as UserIcon, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -175,7 +175,7 @@ function AccountContent() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-white">{displayName}</h1>
-            <p className="text-sm text-muted-foreground">{user.email}</p>
+            <p className="text-sm text-muted-foreground">Member since {joined}</p>
           </div>
         </div>
 
@@ -187,7 +187,13 @@ function AccountContent() {
             onEdit={() => setEditingField("fullName")}
             editContent={editingField === "fullName" ? <InlineProfileField label="Full Name" value={profile?.fullName || user.displayName || ""} type="text" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { fullName: value }, { merge: true }); setEditingField(null) }} /> : undefined}
           />
-          <InfoCard icon={<Mail className="size-4" />} label="Email" value={user.email || "—"} />
+          <div className="self-start rounded-2xl border border-white/8 bg-card/60 p-5">
+            <div className="flex items-center gap-2 text-muted-foreground"><span className="text-primary" aria-hidden="true"><Mail className="size-4" /></span><span className="text-xs font-medium uppercase tracking-wide">Email</span></div>
+            <p className="mt-2 truncate text-sm font-medium text-white">{user.email || "—"}</p>
+            <div className="mt-3 flex items-center gap-3"><span className="text-xs text-muted-foreground">Verified: <span className="font-medium text-white">{emailVerified ? "Yes" : "No"}</span></span>{!emailVerified && <button type="button" onClick={handleVerifyEmail} disabled={verificationBusy} className="text-xs font-semibold text-primary hover:underline disabled:opacity-60">{verificationBusy ? "Sending…" : "Verify email"}</button>}</div>
+            {verificationMessage && <p role="status" className="mt-2 text-xs leading-5 text-muted-foreground">{verificationMessage}</p>}
+            {!emailVerified && <button type="button" onClick={refreshVerificationStatus} className="mt-2 text-xs text-muted-foreground underline underline-offset-2 hover:text-white">I verified it — refresh status</button>}
+          </div>
           <InfoCard
             icon={<Phone className="size-4" />}
             label="Phone number"
@@ -195,19 +201,7 @@ function AccountContent() {
             onEdit={() => setEditingField("phoneNumber")}
             editContent={editingField === "phoneNumber" ? <InlineProfileField label="Phone number" value={profile?.phoneNumber || ""} type="tel" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { phoneNumber: value }, { merge: true }); setEditingField(null) }} /> : undefined}
           />
-          <div className="self-start rounded-2xl border border-white/8 bg-card/60 p-5">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <span className="text-primary" aria-hidden="true"><ShieldCheck className="size-4" /></span>
-                <span className="text-xs font-medium uppercase tracking-wide">Email verified</span>
-              </div>
-              {!emailVerified && <button type="button" onClick={handleVerifyEmail} disabled={verificationBusy} className="text-xs font-semibold text-primary hover:underline disabled:opacity-60">{verificationBusy ? "Sending…" : "Verify email"}</button>}
-            </div>
-            <p className="mt-2 text-sm font-medium text-white">{emailVerified ? "Yes" : "No"}</p>
-            {verificationMessage && <p role="status" className="mt-2 text-xs leading-5 text-muted-foreground">{verificationMessage}</p>}
-            {!emailVerified && <button type="button" onClick={refreshVerificationStatus} className="mt-2 text-xs text-muted-foreground underline underline-offset-2 hover:text-white">I verified it — refresh status</button>}
-          </div>
-          <InfoCard icon={<UserIcon className="size-4" />} label="Member since" value={joined} />
+
         </div>
 
         {purchaseMessage && (
