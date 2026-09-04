@@ -24,7 +24,14 @@ export function SiteHeader() {
         <div className="hidden md:block">
           {!loading && (user ? <Link href="/account" className="rounded-lg bg-primary px-4 py-2.5 text-xs font-bold tracking-widest text-primary-foreground transition-opacity hover:opacity-90">ACCOUNT</Link> : <Link href="/login" className="rounded-lg border border-primary/60 px-4 py-2.5 text-xs font-bold tracking-widest text-primary transition-colors hover:bg-primary hover:text-primary-foreground">SIGN IN</Link>)}
         </div>
-        <button type="button" className="p-2 text-foreground md:hidden" onClick={() => setOpen(!open)} aria-label={open ? "Close menu" : "Open menu"}>{open ? <X /> : <Menu />}</button>
+        <div className="flex items-center gap-2 md:hidden">
+          {!loading && (user ? (
+            <Link href="/account" className="rounded-lg bg-primary px-3 py-2 text-[11px] font-bold tracking-wider text-primary-foreground" aria-label="Open account">ACCOUNT</Link>
+          ) : (
+            <Link href="/login" className="rounded-lg border border-primary/60 px-3 py-2 text-[11px] font-bold tracking-wider text-primary" aria-label="Sign in">SIGN IN</Link>
+          ))}
+          <button type="button" className="p-2 text-foreground" onClick={() => setOpen(!open)} aria-label={open ? "Close menu" : "Open menu"}>{open ? <X /> : <Menu />}</button>
+        </div>
       </div>
       {open && <nav className="flex flex-col gap-5 border-t border-white/10 px-5 py-6 text-sm text-muted-foreground md:hidden" aria-label="Mobile navigation">
         <Link href="/features" onClick={() => setOpen(false)}>Features</Link><Link href="/faq" onClick={() => setOpen(false)}>FAQ</Link><Link href="/#download" onClick={() => setOpen(false)}>Download</Link>
