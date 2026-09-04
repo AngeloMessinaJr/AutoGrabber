@@ -177,7 +177,6 @@ function AccountContent() {
             <h1 className="text-2xl font-semibold text-white">{displayName}</h1>
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
-          {editingField === "profilePicture" && <InlineProfilePicture uid={user.uid} onClose={() => setEditingField(null)} />}
         </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -225,6 +224,7 @@ function AccountContent() {
       </div>
 
       {deleting && <DeleteAccountDialog email={user.email ?? ""} onClose={() => setDeleting(false)} onDelete={async (password) => { await deleteAccount(password); router.replace("/") }} />}
+      {editingField === "profilePicture" && <ProfilePictureDialog uid={user.uid} onClose={() => setEditingField(null)} />}
     </main>
   )
 }
@@ -245,12 +245,12 @@ function InlineProfileField({ label, value, type, onClose, onSave }: { label: st
   return <form onSubmit={submit} className="mt-3 flex flex-wrap items-center gap-2"><label htmlFor={`edit-${label}`} className="sr-only">Edit {label}</label><input id={`edit-${label}`} autoFocus type={type} value={nextValue} onChange={(event) => setNextValue(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-primary/50 bg-background px-3 py-2 text-sm text-white outline-none focus:border-primary" /><button type="submit" disabled={saving} className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-60">{saving ? "Saving…" : "Save"}</button><button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-white">Cancel</button>{error && <p role="alert" className="basis-full text-xs text-destructive">{error}</p>}</form>
 }
 
-function InlineProfilePicture({ uid, onClose }: { uid: string; onClose: () => void }) {
+function ProfilePictureDialog({ uid, onClose }: { uid: string; onClose: () => void }) {
   const [file, setFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   async function submit(event: React.FormEvent) { event.preventDefault(); if (!file) return setError("Choose an image first."); if (!file.type.startsWith("image/")) return setError("Please select an image file."); if (file.size > 5 * 1024 * 1024) return setError("Please select an image smaller than 5 MB."); setSaving(true); setError(null); try { const imageRef = ref(storage, `users/${uid}/profile-picture`); await uploadBytes(imageRef, file, { contentType: file.type }); const url = await getDownloadURL(imageRef); await setDoc(doc(db, "users", uid), { profilePictureUrl: url }, { merge: true }); onClose() } catch { setError("Could not upload picture. Please try again."); setSaving(false) } }
-  return <form onSubmit={submit} className="mt-3 flex flex-wrap items-center gap-2"><label htmlFor="profile-picture-upload" className="sr-only">Choose profile picture</label><input id="profile-picture-upload" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="min-w-0 flex-1 text-xs text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-foreground" /><button type="submit" disabled={saving} className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-60">{saving ? "Uploading…" : "Upload"}</button><button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-white">Cancel</button>{error && <p role="alert" className="basis-full text-xs text-destructive">{error}</p>}</form>
+  return <div className="fixed inset-0 z-50 flex items-center justify-center p-4"><button type="button" aria-label="Close profile picture dialog" onClick={onClose} className="absolute inset-0 bg-black/70" /><form onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="profile-picture-title" className="relative w-full max-w-md rounded-2xl border border-white/10 bg-card p-6 shadow-2xl"><h2 id="profile-picture-title" className="text-lg font-semibold text-white">Update profile picture</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Choose an image to use on your AutoGrabber profile.</p><label htmlFor="profile-picture-upload" className="sr-only">Choose profile picture</label><input id="profile-picture-upload" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="mt-5 w-full cursor-pointer rounded-lg border border-white/10 bg-background px-3 py-2.5 text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-foreground" />{error && <p role="alert" className="mt-3 text-xs text-destructive">{error}</p>}<div className="mt-6 flex justify-end gap-3"><button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-muted-foreground hover:text-white">Cancel</button><button type="submit" disabled={saving} className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60">{saving ? "Uploading…" : "Upload picture"}</button></div></form></div>
 }
 
 function SubscriptionPortal({ uid, hasLifetimeAccess }: { uid: string; hasLifetimeAccess: boolean }) {
