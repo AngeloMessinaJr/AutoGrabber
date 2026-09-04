@@ -1,19 +1,13 @@
-import { SiteHeader } from "@/components/site-header"
-import { Hero } from "@/components/hero"
-import { Features } from "@/components/features"
-import { InstallDownload } from "@/components/install-download"
+import { ArrowRight, Bot, Check, Download, ShieldCheck, Sparkles, Zap } from "lucide-react"
+import Link from "next/link"
 import { SiteFooter } from "@/components/site-footer"
+import { SiteHeader } from "@/components/site-header"
+import { PhoneMockup } from "@/components/phone-mockup"
 
 export default function Page() {
-  return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <SiteHeader />
-      <main className="flex-1">
-        <Hero />
-        <Features />
-        <InstallDownload />
-      </main>
-      <SiteFooter />
-    </div>
-  )
+  return <div className="min-h-screen bg-background text-foreground"><SiteHeader /><main>
+    <section className="relative overflow-hidden"><div className="mx-auto flex max-w-7xl flex-col items-center gap-14 px-5 pb-20 pt-20 lg:flex-row lg:justify-between lg:px-8 lg:pb-28 lg:pt-28"><div className="max-w-2xl"><div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-primary"><Sparkles className="size-3.5" /> Smarter driving starts here</div><h1 className="text-balance text-5xl font-bold tracking-tight text-foreground sm:text-7xl">More offers.<br /><span className="text-primary">Less waiting.</span></h1><p className="mt-7 max-w-xl text-pretty text-lg leading-8 text-muted-foreground">AutoGrabber helps delivery drivers find, filter, and act on the right opportunities before they disappear.</p><div className="mt-9 flex flex-col gap-3 sm:flex-row"><Link href="#download" className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3.5 text-sm font-bold text-primary-foreground transition-transform hover:-translate-y-0.5">Download AutoGrabber <ArrowRight className="size-4" /></Link><Link href="/features" className="inline-flex items-center justify-center rounded-lg border border-white/15 px-5 py-3.5 text-sm font-semibold text-foreground hover:bg-white/5">See how it works</Link></div><div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-xs text-muted-foreground"><span className="flex items-center gap-2"><Check className="size-4 text-primary" /> Instacart, DoorDash & Flex</span><span className="flex items-center gap-2"><ShieldCheck className="size-4 text-primary" /> Built for Android</span></div></div><div className="relative flex w-full justify-center lg:w-auto"><div className="absolute -inset-12 rounded-full bg-primary/10 blur-3xl" /><PhoneMockup /></div></div></section>
+    <section className="border-y border-white/10 bg-card/35"><div className="mx-auto grid max-w-7xl gap-6 px-5 py-12 sm:grid-cols-3 lg:px-8"><div className="flex gap-4"><Zap className="mt-1 size-5 shrink-0 text-primary" /><div><h2 className="font-semibold">Move at the right moment</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Stay focused while AutoGrabber keeps opportunities visible.</p></div></div><div className="flex gap-4"><Bot className="mt-1 size-5 shrink-0 text-primary" /><div><h2 className="font-semibold">One clean dashboard</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Your favorite platforms, launches, and settings in one place.</p></div></div><div className="flex gap-4"><Download className="mt-1 size-5 shrink-0 text-primary" /><div><h2 className="font-semibold">Ready when you are</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Install the app and get back to driving.</p></div></div></div></section>
+    <section id="download" className="mx-auto max-w-7xl px-5 py-24 text-center lg:px-8"><p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">Get started</p><h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Your next great offer is out there.</h2><p className="mx-auto mt-4 max-w-lg text-muted-foreground">Join drivers using AutoGrabber to spend less time searching and more time earning.</p><a href="#" className="mt-8 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground hover:opacity-90"><Download className="size-4" /> Download APK</a></section>
+  </main><SiteFooter /></div>
 }

@@ -5,11 +5,14 @@ import {
   onAuthStateChanged,
   signOut as fbSignOut,
   signInWithEmailAndPassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  deleteUser,
   updateProfile,
   type User,
 } from "firebase/auth"
 import { createContext, useContext, useEffect, useMemo, useState } from "react"
-import { doc, setDoc } from "firebase/firestore"
+import { deleteDoc, doc, setDoc } from "firebase/firestore"
 import { auth, db } from "@/lib/firebase"
 
 type AuthContextValue = {
@@ -18,6 +21,7 @@ type AuthContextValue = {
   signUp: (form: { email: string; password: string; fullName?: string; phoneNumber?: string; dateOfBirth?: string }) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  deleteAccount: (password: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -62,6 +66,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       async signOut() {
         await fbSignOut(auth)
+      },
+      async deleteAccount(password) {
+        if (!auth.currentUser || !auth.currentUser.email) throw new Error("No signed-in account found.")
+        const credential = EmailAuthProvider.credential(auth.currentUser.email, password)
+        await reauthenticateWithCredential(auth.currentUser, credential)
+        const uid = auth.currentUser.uid
+        await deleteDoc(doc(db, "users", uid))
+        await deleteUser(auth.currentUser)
       },
     }),
     [user, loading],

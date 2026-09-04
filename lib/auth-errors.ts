@@ -10,6 +10,7 @@ const messages: Record<string, string> = {
     "Password must be at least 6 characters and include a number and a special character.",
   "auth/too-many-requests": "Too many attempts. Please try again later.",
   "auth/network-request-failed": "Network error. Check your connection and try again.",
+  "auth/requires-recent-login": "For security, please sign in again before deleting your account.",
 }
 
 export function authErrorMessage(error: unknown): string {
