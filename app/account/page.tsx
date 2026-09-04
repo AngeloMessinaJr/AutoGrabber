@@ -177,6 +177,7 @@ function AccountContent() {
             <h1 className="text-2xl font-semibold text-white">{displayName}</h1>
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
+          {editingField === "profilePicture" && <InlineProfilePicture uid={user.uid} onClose={() => setEditingField(null)} />}
         </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -185,6 +186,7 @@ function AccountContent() {
             label="Full Name"
             value={profile?.fullName || user.displayName || "Not set"}
             onEdit={() => setEditingField("fullName")}
+            editContent={editingField === "fullName" ? <InlineProfileField label="Full Name" value={profile?.fullName || user.displayName || ""} type="text" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { fullName: value }, { merge: true }); setEditingField(null) }} /> : undefined}
           />
           <InfoCard icon={<Mail className="size-4" />} label="Email" value={user.email || "—"} />
           <InfoCard
@@ -192,6 +194,7 @@ function AccountContent() {
             label="Phone number"
             value={profile?.phoneNumber || "Not set"}
             onEdit={() => setEditingField("phoneNumber")}
+            editContent={editingField === "phoneNumber" ? <InlineProfileField label="Phone number" value={profile?.phoneNumber || ""} type="tel" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { phoneNumber: value }, { merge: true }); setEditingField(null) }} /> : undefined}
           />
           <div className="rounded-2xl border border-white/8 bg-card/60 p-5">
             <div className="flex items-center justify-between gap-2">
@@ -221,9 +224,6 @@ function AccountContent() {
 
       </div>
 
-      {editingField === "fullName" && <InlineProfileField label="Full Name" value={profile?.fullName || user.displayName || ""} type="text" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { fullName: value }, { merge: true }); setEditingField(null) }} />}
-      {editingField === "phoneNumber" && <InlineProfileField label="Phone number" value={profile?.phoneNumber || ""} type="tel" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { phoneNumber: value }, { merge: true }); setEditingField(null) }} />}
-      {editingField === "profilePicture" && <InlineProfilePicture uid={user.uid} onClose={() => setEditingField(null)} />}
       {deleting && <DeleteAccountDialog email={user.email ?? ""} onClose={() => setDeleting(false)} onDelete={async (password) => { await deleteAccount(password); router.replace("/") }} />}
     </main>
   )
@@ -458,7 +458,7 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor: string; c
   )
 }
 
-function InfoCard({ icon, label, value, onEdit }: { icon: React.ReactNode; label: string; value: string; onEdit?: () => void }) {
+function InfoCard({ icon, label, value, onEdit, editContent }: { icon: React.ReactNode; label: string; value: string; onEdit?: () => void; editContent?: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-white/8 bg-card/60 p-5">
       <div className="flex items-center justify-between gap-2">
@@ -472,7 +472,7 @@ function InfoCard({ icon, label, value, onEdit }: { icon: React.ReactNode; label
           </button>
         )}
       </div>
-      <p className="mt-2 truncate text-sm font-medium text-white">{value}</p>
+      {editContent ?? <p className="mt-2 truncate text-sm font-medium text-white">{value}</p>}
     </div>
   )
 }
