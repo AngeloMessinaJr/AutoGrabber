@@ -2,7 +2,7 @@
 
 import { doc, onSnapshot, setDoc } from "firebase/firestore"
 import { reload, sendEmailVerification } from "firebase/auth"
-import { AlertTriangle, Bot, Check, CreditCard, LogOut, Mail, Pencil, Phone, ShieldCheck, User as UserIcon, X } from "lucide-react"
+import { AlertTriangle, Bot, Check, CreditCard, LogOut, Mail, Pencil, Phone, User as UserIcon, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -28,18 +28,15 @@ function AccountContent() {
   const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null)
   const [editingField, setEditingField] = useState<"fullName" | "phoneNumber" | "profilePicture" | null>(null)
   const [verificationBusy, setVerificationBusy] = useState(false)
-  const [verificationMessage, setVerificationMessage] = useState<string | null>(null)
   const [emailVerified, setEmailVerified] = useState(false)
 
   async function handleVerifyEmail() {
     if (!user || user.emailVerified) return
     setVerificationBusy(true)
-    setVerificationMessage(null)
     try {
       await sendEmailVerification(user)
-      setVerificationMessage("Verification email sent. Check your inbox, then return and refresh this page.")
     } catch (error) {
-      setVerificationMessage(authErrorMessage(error))
+      console.error(authErrorMessage(error))
     } finally {
       setVerificationBusy(false)
     }
@@ -96,7 +93,7 @@ function AccountContent() {
     if (!user) return
     await reload(user)
     setEmailVerified(user.emailVerified)
-    setVerificationMessage(user.emailVerified ? "Email verified." : "Your email is not verified yet.")
+
   }
 
   useEffect(() => {
@@ -175,11 +172,12 @@ function AccountContent() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-white">{displayName}</h1>
-            <p className="text-sm text-muted-foreground">{user.email}</p>
+            <p className="text-sm text-muted-foreground">Member since {joined}</p>
           </div>
         </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <div className="mt-8 grid items-start gap-4 sm:grid-cols-2">
+          <div className="flex min-w-0 flex-col gap-4">
           <InfoCard
             icon={<UserIcon className="size-4" />}
             label="Full Name"
@@ -187,7 +185,6 @@ function AccountContent() {
             onEdit={() => setEditingField("fullName")}
             editContent={editingField === "fullName" ? <InlineProfileField label="Full Name" value={profile?.fullName || user.displayName || ""} type="text" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { fullName: value }, { merge: true }); setEditingField(null) }} /> : undefined}
           />
-          <InfoCard icon={<Mail className="size-4" />} label="Email" value={user.email || "—"} />
           <InfoCard
             icon={<Phone className="size-4" />}
             label="Phone number"
@@ -195,19 +192,14 @@ function AccountContent() {
             onEdit={() => setEditingField("phoneNumber")}
             editContent={editingField === "phoneNumber" ? <InlineProfileField label="Phone number" value={profile?.phoneNumber || ""} type="tel" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { phoneNumber: value }, { merge: true }); setEditingField(null) }} /> : undefined}
           />
-          <div className="rounded-2xl border border-white/8 bg-card/60 p-5">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <span className="text-primary" aria-hidden="true"><ShieldCheck className="size-4" /></span>
-                <span className="text-xs font-medium uppercase tracking-wide">Email verified</span>
-              </div>
-              {!emailVerified && <button type="button" onClick={handleVerifyEmail} disabled={verificationBusy} className="text-xs font-semibold text-primary hover:underline disabled:opacity-60">{verificationBusy ? "Sending…" : "Verify email"}</button>}
-            </div>
-            <p className="mt-2 text-sm font-medium text-white">{emailVerified ? "Yes" : "No"}</p>
-            {verificationMessage && <p role="status" className="mt-2 text-xs leading-5 text-muted-foreground">{verificationMessage}</p>}
-            {!emailVerified && <button type="button" onClick={refreshVerificationStatus} className="mt-2 text-xs text-muted-foreground underline underline-offset-2 hover:text-white">I verified it — refresh status</button>}
           </div>
-          <InfoCard icon={<UserIcon className="size-4" />} label="Member since" value={joined} />
+          <div className="min-w-0">
+            <div className="self-start w-full rounded-2xl border border-white/8 bg-card/60 p-5">
+              <div className="flex items-center gap-2 text-muted-foreground"><span className="text-primary" aria-hidden="true"><Mail className="size-4" /></span><span className="text-xs font-medium uppercase tracking-wide">Email</span></div>
+              <p className="mt-2 truncate text-sm font-medium text-white">{user.email || "—"}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1"><span className="text-xs text-muted-foreground">Verified: <span className="font-medium text-white">{emailVerified ? "Yes" : "No"}</span></span>{!emailVerified && <><button type="button" onClick={handleVerifyEmail} disabled={verificationBusy} className="text-xs font-semibold text-primary hover:underline disabled:opacity-60">{verificationBusy ? "Sending…" : "Verify email"}</button><button type="button" onClick={refreshVerificationStatus} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-white">Refresh status</button></>}</div>
+            </div>
+          </div>
         </div>
 
         {purchaseMessage && (
@@ -218,7 +210,7 @@ function AccountContent() {
         <SubscriptionPortal uid={user.uid} hasLifetimeAccess={hasLifetimeAccess} />
 
         <div className="mt-8 rounded-2xl border border-destructive/25 bg-destructive/5 p-6 md:p-8">
-          <div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" /><div><h2 className="text-lg font-semibold text-white">Delete account</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Permanently remove your Firebase account and profile. This also frees your email to register again.</p><button type="button" onClick={() => setDeleting(true)} className="mt-5 rounded-lg border border-destructive/50 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10">Delete my account</button></div></div>
+          <div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" /><div><h2 className="text-lg font-semibold text-white">Delete my account</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Permanently delete your account and all associated data, including lifetime access. This action cannot be undone. You can create a new account at any time.</p><button type="button" onClick={() => setDeleting(true)} className="mt-5 rounded-lg border border-destructive/50 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10">Delete my account</button></div></div>
         </div>
 
       </div>
@@ -460,7 +452,7 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor: string; c
 
 function InfoCard({ icon, label, value, onEdit, editContent }: { icon: React.ReactNode; label: string; value: string; onEdit?: () => void; editContent?: React.ReactNode }) {
   return (
-    <div className="self-start rounded-2xl border border-white/8 bg-card/60 p-5">
+    <div className="self-start w-full rounded-2xl border border-white/8 bg-card/60 p-5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-muted-foreground">
           <span className="text-primary" aria-hidden="true">{icon}</span>
