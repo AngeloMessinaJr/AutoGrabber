@@ -460,7 +460,7 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor: string; c
 
 function InfoCard({ icon, label, value, onEdit, editContent }: { icon: React.ReactNode; label: string; value: string; onEdit?: () => void; editContent?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-white/8 bg-card/60 p-5">
+    <div className="self-start rounded-2xl border border-white/8 bg-card/60 p-5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-muted-foreground">
           <span className="text-primary" aria-hidden="true">{icon}</span>
