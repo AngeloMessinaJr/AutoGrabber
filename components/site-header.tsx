@@ -19,7 +19,7 @@ export function SiteHeader() {
         <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex" aria-label="Main navigation">
           <Link href="/features" className="transition-colors hover:text-primary">Features</Link>
           <Link href="/faq" className="transition-colors hover:text-primary">FAQ</Link>
-          <Link href="/#download" className="transition-colors hover:text-primary">Download</Link>
+          <Link href="/contact" className="transition-colors hover:text-primary">Contact</Link>
         </nav>
         <div className="hidden md:block">
           {!loading && (user ? <Link href="/account" className="rounded-lg bg-primary px-4 py-2.5 text-xs font-bold tracking-widest text-primary-foreground transition-opacity hover:opacity-90">ACCOUNT</Link> : <Link href="/login" className="rounded-lg border border-primary/60 px-4 py-2.5 text-xs font-bold tracking-widest text-primary transition-colors hover:bg-primary hover:text-primary-foreground">SIGN IN</Link>)}
@@ -34,8 +34,7 @@ export function SiteHeader() {
         </div>
       </div>
       {open && <nav className="flex flex-col gap-5 border-t border-white/10 px-5 py-6 text-sm text-muted-foreground md:hidden" aria-label="Mobile navigation">
-        <Link href="/features" onClick={() => setOpen(false)}>Features</Link><Link href="/faq" onClick={() => setOpen(false)}>FAQ</Link><Link href="/#download" onClick={() => setOpen(false)}>Download</Link>
-        {!loading && (user ? <Link href="/account" onClick={() => setOpen(false)} className="text-primary">Account</Link> : <Link href="/login" onClick={() => setOpen(false)} className="text-primary">Sign in</Link>)}
+        <Link href="/features" onClick={() => setOpen(false)}>Features</Link><Link href="/faq" onClick={() => setOpen(false)}>FAQ</Link><Link href="/contact" onClick={() => setOpen(false)}>Contact</Link>
       </nav>}
     </header>
   )
