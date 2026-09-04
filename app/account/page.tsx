@@ -1,13 +1,14 @@
 "use client"
 
 import { doc, onSnapshot, setDoc } from "firebase/firestore"
-import { Bot, Check, CreditCard, LogOut, Mail, Pencil, Phone, ShieldCheck, User as UserIcon, X } from "lucide-react"
+import { AlertTriangle, Bot, Check, CreditCard, LogOut, Mail, Pencil, Phone, ShieldCheck, User as UserIcon, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { db } from "@/lib/firebase"
+import { authErrorMessage } from "@/lib/auth-errors"
 
 type UserProfile = {
   fullName?: string
@@ -19,8 +20,9 @@ type UserProfile = {
 function AccountContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user, loading, signOut } = useAuth()
+  const { user, loading, signOut, deleteAccount } = useAuth()
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
 
@@ -170,6 +172,10 @@ function AccountContent() {
         )}
         <SubscriptionPortal uid={user.uid} hasLifetimeAccess={hasLifetimeAccess} />
 
+        <div className="mt-8 rounded-2xl border border-destructive/25 bg-destructive/5 p-6 md:p-8">
+          <div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" /><div><h2 className="text-lg font-semibold text-white">Delete account</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Permanently remove your Firebase account and profile. This also frees your email to register again.</p><button type="button" onClick={() => setDeleting(true)} className="mt-5 rounded-lg border border-destructive/50 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10">Delete my account</button></div></div>
+        </div>
+
         <div className="mt-8 rounded-2xl border border-white/8 bg-card/60 p-6 md:p-8">
           <h2 className="text-lg font-semibold text-white">Your download</h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -187,6 +193,7 @@ function AccountContent() {
       {editing && (
         <EditProfileDialog uid={user.uid} profile={profile ?? {}} onClose={() => setEditing(false)} />
       )}
+      {deleting && <DeleteAccountDialog email={user.email ?? ""} onClose={() => setDeleting(false)} onDelete={async (password) => { await deleteAccount(password); router.replace("/") }} />}
     </main>
   )
 }
@@ -369,6 +376,19 @@ function EditProfileDialog({
       </div>
     </div>
   )
+}
+
+function DeleteAccountDialog({ email, onClose, onDelete }: { email: string; onClose: () => void; onDelete: (password: string) => Promise<void> }) {
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  async function submit(event: React.FormEvent) {
+    event.preventDefault()
+    setSaving(true)
+    setError(null)
+    try { await onDelete(password) } catch (err) { setError(authErrorMessage(err)); setSaving(false) }
+  }
+  return <div className="fixed inset-0 z-50 flex items-center justify-center p-4"><button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/70" /><form onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="delete-account-title" className="relative w-full max-w-md rounded-2xl border border-destructive/30 bg-card p-6 shadow-xl"><div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" /><div><h2 id="delete-account-title" className="text-lg font-semibold text-white">Delete account permanently?</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">This removes <span className="text-white">{email}</span> and its profile. You can register this email again afterward.</p></div></div><label htmlFor="delete-password" className="mt-6 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Confirm password</label><input id="delete-password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-2 w-full rounded-lg border border-input bg-white/[0.03] px-3 py-2.5 text-sm text-white outline-none focus:border-destructive/60" />{error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}<div className="mt-6 flex justify-end gap-3"><button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-muted-foreground hover:bg-white/5">Cancel</button><button type="submit" disabled={saving} className="rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground disabled:opacity-60">{saving ? "Deleting…" : "Delete account"}</button></div></form></div>
 }
 
 function Field({ label, htmlFor, children }: { label: string; htmlFor: string; children: React.ReactNode }) {
