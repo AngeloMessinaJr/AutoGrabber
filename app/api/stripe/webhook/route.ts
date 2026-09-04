@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import type Stripe from "stripe"
+import { FieldValue } from "firebase-admin/firestore"
 import { getAdminDb } from "@/lib/firebase-admin"
 import { stripe } from "@/lib/stripe"
 
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
           {
             hasLifetimeAccess: true,
             status: "active",
-            purchasedAt: new Date(),
+            purchasedAt: FieldValue.serverTimestamp(),
           },
           { merge: true },
         )
