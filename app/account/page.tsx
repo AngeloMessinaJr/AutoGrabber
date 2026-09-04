@@ -218,7 +218,7 @@ function AccountContent() {
         <SubscriptionPortal uid={user.uid} hasLifetimeAccess={hasLifetimeAccess} />
 
         <div className="mt-8 rounded-2xl border border-destructive/25 bg-destructive/5 p-6 md:p-8">
-          <div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" /><div><h2 className="text-lg font-semibold text-white">Delete account</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Permanently remove your Firebase account and profile. This also frees your email to register again.</p><button type="button" onClick={() => setDeleting(true)} className="mt-5 rounded-lg border border-destructive/50 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10">Delete my account</button></div></div>
+          <div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" /><div><h2 className="text-lg font-semibold text-white">Delete account</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Permanently delete your account and all associated data, including lifetime access. This action cannot be undone. You can create a new account at any time.</p><button type="button" onClick={() => setDeleting(true)} className="mt-5 rounded-lg border border-destructive/50 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10">Delete my account</button></div></div>
         </div>
 
       </div>
