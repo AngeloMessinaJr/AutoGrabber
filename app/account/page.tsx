@@ -1,14 +1,16 @@
 "use client"
 
 import { doc, onSnapshot, setDoc } from "firebase/firestore"
+import { reload, sendEmailVerification } from "firebase/auth"
 import { AlertTriangle, Bot, Check, CreditCard, LogOut, Mail, Pencil, Phone, ShieldCheck, User as UserIcon, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { db } from "@/lib/firebase"
+import { db, storage } from "@/lib/firebase"
 import { authErrorMessage } from "@/lib/auth-errors"
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage"
 
 type UserProfile = {
   fullName?: string
@@ -25,9 +27,27 @@ function AccountContent() {
   const [deleting, setDeleting] = useState(false)
   const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
+  const [verificationBusy, setVerificationBusy] = useState(false)
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null)
+  const [emailVerified, setEmailVerified] = useState(false)
+
+  async function handleVerifyEmail() {
+    if (!user || user.emailVerified) return
+    setVerificationBusy(true)
+    setVerificationMessage(null)
+    try {
+      await sendEmailVerification(user)
+      setVerificationMessage("Verification email sent. Check your inbox, then return and refresh this page.")
+    } catch (error) {
+      setVerificationMessage(authErrorMessage(error))
+    } finally {
+      setVerificationBusy(false)
+    }
+  }
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login")
+    if (user) setEmailVerified(user.emailVerified)
   }, [loading, user, router])
 
   useEffect(() => {
@@ -71,6 +91,22 @@ function AccountContent() {
     await signOut()
     router.replace("/login")
   }
+
+  async function refreshVerificationStatus() {
+    if (!user) return
+    await reload(user)
+    setEmailVerified(user.emailVerified)
+    setVerificationMessage(user.emailVerified ? "Email verified." : "Your email is not verified yet.")
+  }
+
+  useEffect(() => {
+    if (!user || emailVerified) return
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") void refreshVerificationStatus()
+    }
+    document.addEventListener("visibilitychange", handleVisibility)
+    return () => document.removeEventListener("visibilitychange", handleVisibility)
+  }, [user, emailVerified])
 
   if (loading || !user) {
     return (
@@ -157,11 +193,18 @@ function AccountContent() {
             value={profile?.phoneNumber || "Not set"}
             onEdit={() => setEditing(true)}
           />
-          <InfoCard
-            icon={<ShieldCheck className="size-4" />}
-            label="Email verified"
-            value={user.emailVerified ? "Yes" : "No"}
-          />
+          <div className="rounded-2xl border border-white/8 bg-card/60 p-5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="text-primary" aria-hidden="true"><ShieldCheck className="size-4" /></span>
+                <span className="text-xs font-medium uppercase tracking-wide">Email verified</span>
+              </div>
+              {!emailVerified && <button type="button" onClick={handleVerifyEmail} disabled={verificationBusy} className="text-xs font-semibold text-primary hover:underline disabled:opacity-60">{verificationBusy ? "Sending…" : "Verify email"}</button>}
+            </div>
+            <p className="mt-2 text-sm font-medium text-white">{emailVerified ? "Yes" : "No"}</p>
+            {verificationMessage && <p role="status" className="mt-2 text-xs leading-5 text-muted-foreground">{verificationMessage}</p>}
+            {!emailVerified && <button type="button" onClick={refreshVerificationStatus} className="mt-2 text-xs text-muted-foreground underline underline-offset-2 hover:text-white">I verified it — refresh status</button>}
+          </div>
           <InfoCard icon={<UserIcon className="size-4" />} label="Member since" value={joined} />
         </div>
 
@@ -176,18 +219,6 @@ function AccountContent() {
           <div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" /><div><h2 className="text-lg font-semibold text-white">Delete account</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Permanently remove your Firebase account and profile. This also frees your email to register again.</p><button type="button" onClick={() => setDeleting(true)} className="mt-5 rounded-lg border border-destructive/50 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10">Delete my account</button></div></div>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-white/8 bg-card/60 p-6 md:p-8">
-          <h2 className="text-lg font-semibold text-white">Your download</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Your account is active. Grab the latest AutoGrabber APK below.
-          </p>
-          <a
-            href="/#download"
-            className="mt-5 inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            Go to download
-          </a>
-        </div>
       </div>
 
       {editing && (
@@ -274,6 +305,7 @@ function EditProfileDialog({
   const [fullName, setFullName] = useState(profile.fullName ?? "")
   const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber ?? "")
   const [profilePictureUrl, setProfilePictureUrl] = useState(profile.profilePictureUrl ?? "")
+  const [selectedPicture, setSelectedPicture] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -282,12 +314,20 @@ function EditProfileDialog({
     setSaving(true)
     setError(null)
     try {
+      let nextProfilePictureUrl = profilePictureUrl.trim()
+      if (selectedPicture) {
+        if (!selectedPicture.type.startsWith("image/")) throw new Error("Please select an image file.")
+        if (selectedPicture.size > 5 * 1024 * 1024) throw new Error("Please select an image smaller than 5 MB.")
+        const pictureRef = ref(storage, `users/${uid}/profile-picture`)
+        await uploadBytes(pictureRef, selectedPicture, { contentType: selectedPicture.type })
+        nextProfilePictureUrl = await getDownloadURL(pictureRef)
+      }
       await setDoc(
         doc(db, "users", uid),
         {
           fullName: fullName.trim(),
           phoneNumber: phoneNumber.trim(),
-          profilePictureUrl: profilePictureUrl.trim(),
+          profilePictureUrl: nextProfilePictureUrl,
         },
         { merge: true },
       )
@@ -343,15 +383,15 @@ function EditProfileDialog({
             />
           </Field>
 
-          <Field label="Profile picture URL" htmlFor="profilePictureUrl">
+          <Field label="Profile picture" htmlFor="profilePicture">
             <input
-              id="profilePictureUrl"
-              type="url"
-              value={profilePictureUrl}
-              onChange={(e) => setProfilePictureUrl(e.target.value)}
-              placeholder="https://example.com/photo.jpg"
-              className="w-full rounded-lg border border-white/10 bg-background px-3 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+              id="profilePicture"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onChange={(e) => setSelectedPicture(e.target.files?.[0] ?? null)}
+              className="w-full cursor-pointer rounded-lg border border-white/10 bg-background px-3 py-2.5 text-sm text-white outline-none file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary-foreground focus:border-primary"
             />
+            <p className="text-xs text-muted-foreground">PNG, JPG, WEBP, or GIF up to 5 MB.</p>
           </Field>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
