@@ -12,6 +12,8 @@ export default function LoginPage() {
   const { user, loading, signIn, signUp } = useAuth()
   const [mode, setMode] = useState<"signin" | "signup">("signin")
   const [name, setName] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [dateOfBirth, setDateOfBirth] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -27,7 +29,13 @@ export default function LoginPage() {
     setSubmitting(true)
     try {
       if (mode === "signup") {
-        await signUp(email, password, name.trim() || undefined)
+        await signUp({
+          email,
+          password,
+          fullName: name.trim(),
+          phoneNumber: phoneNumber.trim(),
+          dateOfBirth,
+        })
       } else {
         await signIn(email, password)
       }
@@ -58,6 +66,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
           {mode === "signup" && (
+            <>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="name" className="text-xs font-medium text-white/80">
                 Name
@@ -72,6 +81,15 @@ export default function LoginPage() {
                 placeholder="Jane Driver"
               />
             </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="phoneNumber" className="text-xs font-medium text-white/80">Phone number</label>
+              <input id="phoneNumber" type="tel" autoComplete="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="rounded-lg border border-input bg-white/[0.03] px-3 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60" placeholder="(555) 123-4567" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="dateOfBirth" className="text-xs font-medium text-white/80">Date of birth</label>
+              <input id="dateOfBirth" type="date" autoComplete="bday" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} className="rounded-lg border border-input bg-white/[0.03] px-3 py-2.5 text-sm text-white outline-none transition-colors focus:border-primary/60" />
+            </div>
+            </>
           )}
 
           <div className="flex flex-col gap-1.5">
