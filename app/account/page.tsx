@@ -28,18 +28,15 @@ function AccountContent() {
   const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null)
   const [editingField, setEditingField] = useState<"fullName" | "phoneNumber" | "profilePicture" | null>(null)
   const [verificationBusy, setVerificationBusy] = useState(false)
-  const [verificationMessage, setVerificationMessage] = useState<string | null>(null)
   const [emailVerified, setEmailVerified] = useState(false)
 
   async function handleVerifyEmail() {
     if (!user || user.emailVerified) return
     setVerificationBusy(true)
-    setVerificationMessage(null)
     try {
       await sendEmailVerification(user)
-      setVerificationMessage("Verification email sent. Check your inbox, then return and refresh this page.")
     } catch (error) {
-      setVerificationMessage(authErrorMessage(error))
+      console.error(authErrorMessage(error))
     } finally {
       setVerificationBusy(false)
     }
@@ -96,7 +93,7 @@ function AccountContent() {
     if (!user) return
     await reload(user)
     setEmailVerified(user.emailVerified)
-    setVerificationMessage(user.emailVerified ? "Email verified." : "Your email is not verified yet.")
+
   }
 
   useEffect(() => {
@@ -201,7 +198,6 @@ function AccountContent() {
               <div className="flex items-center gap-2 text-muted-foreground"><span className="text-primary" aria-hidden="true"><Mail className="size-4" /></span><span className="text-xs font-medium uppercase tracking-wide">Email</span></div>
               <p className="mt-2 truncate text-sm font-medium text-white">{user.email || "—"}</p>
               <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1"><span className="text-xs text-muted-foreground">Verified: <span className="font-medium text-white">{emailVerified ? "Yes" : "No"}</span></span>{!emailVerified && <><button type="button" onClick={handleVerifyEmail} disabled={verificationBusy} className="text-xs font-semibold text-primary hover:underline disabled:opacity-60">{verificationBusy ? "Sending…" : "Verify email"}</button><button type="button" onClick={refreshVerificationStatus} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-white">Refresh status</button></>}</div>
-              {verificationMessage && <p role="status" className="mt-2 text-xs leading-5 text-muted-foreground">{verificationMessage}</p>}
             </div>
           </div>
         </div>
