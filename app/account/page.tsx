@@ -179,7 +179,8 @@ function AccountContent() {
           </div>
         </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <div className="mt-8 grid items-start gap-4 sm:grid-cols-2">
+          <div className="flex min-w-0 flex-col gap-4">
           <InfoCard
             icon={<UserIcon className="size-4" />}
             label="Full Name"
@@ -187,12 +188,6 @@ function AccountContent() {
             onEdit={() => setEditingField("fullName")}
             editContent={editingField === "fullName" ? <InlineProfileField label="Full Name" value={profile?.fullName || user.displayName || ""} type="text" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { fullName: value }, { merge: true }); setEditingField(null) }} /> : undefined}
           />
-          <div className="self-start rounded-2xl border border-white/8 bg-card/60 p-5">
-            <div className="flex items-center gap-2 text-muted-foreground"><span className="text-primary" aria-hidden="true"><Mail className="size-4" /></span><span className="text-xs font-medium uppercase tracking-wide">Email</span></div>
-            <p className="mt-2 truncate text-sm font-medium text-white">{user.email || "—"}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1"><span className="text-xs text-muted-foreground">Verified: <span className="font-medium text-white">{emailVerified ? "Yes" : "No"}</span></span>{!emailVerified && <><button type="button" onClick={handleVerifyEmail} disabled={verificationBusy} className="text-xs font-semibold text-primary hover:underline disabled:opacity-60">{verificationBusy ? "Sending…" : "Verify email"}</button><button type="button" onClick={refreshVerificationStatus} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-white">Refresh status</button></>}</div>
-            {verificationMessage && <p role="status" className="mt-2 text-xs leading-5 text-muted-foreground">{verificationMessage}</p>}
-          </div>
           <InfoCard
             icon={<Phone className="size-4" />}
             label="Phone number"
@@ -200,7 +195,15 @@ function AccountContent() {
             onEdit={() => setEditingField("phoneNumber")}
             editContent={editingField === "phoneNumber" ? <InlineProfileField label="Phone number" value={profile?.phoneNumber || ""} type="tel" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { phoneNumber: value }, { merge: true }); setEditingField(null) }} /> : undefined}
           />
-
+          </div>
+          <div className="min-w-0">
+            <div className="self-start rounded-2xl border border-white/8 bg-card/60 p-5">
+              <div className="flex items-center gap-2 text-muted-foreground"><span className="text-primary" aria-hidden="true"><Mail className="size-4" /></span><span className="text-xs font-medium uppercase tracking-wide">Email</span></div>
+              <p className="mt-2 truncate text-sm font-medium text-white">{user.email || "—"}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1"><span className="text-xs text-muted-foreground">Verified: <span className="font-medium text-white">{emailVerified ? "Yes" : "No"}</span></span>{!emailVerified && <><button type="button" onClick={handleVerifyEmail} disabled={verificationBusy} className="text-xs font-semibold text-primary hover:underline disabled:opacity-60">{verificationBusy ? "Sending…" : "Verify email"}</button><button type="button" onClick={refreshVerificationStatus} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-white">Refresh status</button></>}</div>
+              {verificationMessage && <p role="status" className="mt-2 text-xs leading-5 text-muted-foreground">{verificationMessage}</p>}
+            </div>
+          </div>
         </div>
 
         {purchaseMessage && (
