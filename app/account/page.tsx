@@ -195,7 +195,7 @@ function AccountContent() {
             onEdit={() => setEditingField("phoneNumber")}
             editContent={editingField === "phoneNumber" ? <InlineProfileField label="Phone number" value={profile?.phoneNumber || ""} type="tel" onClose={() => setEditingField(null)} onSave={async (value) => { await setDoc(doc(db, "users", user.uid), { phoneNumber: value }, { merge: true }); setEditingField(null) }} /> : undefined}
           />
-          <div className="rounded-2xl border border-white/8 bg-card/60 p-5">
+          <div className="self-start rounded-2xl border border-white/8 bg-card/60 p-5">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <span className="text-primary" aria-hidden="true"><ShieldCheck className="size-4" /></span>
