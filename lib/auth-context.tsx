@@ -56,7 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           registrationDate: Date.now(),
           purchasedAt: null,
         }, { merge: true })
-        setUser({ ...cred.user })
       },
       async signIn(email, password) {
         await signInWithEmailAndPassword(auth, email, password)
