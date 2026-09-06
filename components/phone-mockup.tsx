@@ -1,7 +1,6 @@
 import Image from "next/image"
 
-const appScreenshot =
-  "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot_20260903_124135_AutoGrabber-7dOQ6aUUqa7B5dPAeyK5RZJZtHrZrk.jpg"
+const appScreenshot = "/app-dashboard.jpg"
 
 export function PhoneMockup() {
   return (
