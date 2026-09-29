@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { AuthProvider } from '@/lib/auth-context'
+import { ChatBubble } from '@/components/chat-bubble'
 import './globals.css'
 
 const geistSans = Geist({
@@ -34,7 +35,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark bg-background ${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <ChatBubble />
+        </AuthProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
