@@ -16,9 +16,7 @@ export function SiteHeader() {
           <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_0_24px_oklch(0.82_0.13_205/0.25)]"><Bot className="size-5" /></span>
           <span className="font-semibold tracking-tight text-foreground">AutoGrabber</span>
         </Link>
-        <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex" aria-label="Main navigation">
-          <Link href="/features" className="transition-colors hover:text-primary">Features & FAQ</Link>
-        </nav>
+        <div className="hidden md:block" aria-hidden="true" />
         <div className="hidden md:block">
           {!loading && (user ? <Link href="/account" className="rounded-lg bg-primary px-4 py-2.5 text-xs font-bold tracking-widest text-primary-foreground transition-opacity hover:opacity-90">ACCOUNT</Link> : <Link href="/login" className="rounded-lg border border-primary/60 px-4 py-2.5 text-xs font-bold tracking-widest text-primary transition-colors hover:bg-primary hover:text-primary-foreground">SIGN IN</Link>)}
         </div>
@@ -31,9 +29,6 @@ export function SiteHeader() {
           <button type="button" className="p-2 text-foreground" onClick={() => setOpen(!open)} aria-label={open ? "Close menu" : "Open menu"}>{open ? <X /> : <Menu />}</button>
         </div>
       </div>
-      {open && <nav className="flex flex-col gap-5 border-t border-white/10 px-5 py-6 text-sm text-muted-foreground md:hidden" aria-label="Mobile navigation">
-        <Link href="/features" onClick={() => setOpen(false)}>Features & FAQ</Link>
-      </nav>}
     </header>
   )
 }
