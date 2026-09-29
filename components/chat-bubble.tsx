@@ -1,12 +1,11 @@
 "use client"
 
-import { addDoc, collection, limit, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore"
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import { MessageCircle, Send, X } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { db } from "@/lib/firebase"
+import { auth } from "@/lib/firebase"
 
- type ChatMessage = { id: string; uid: string; name: string; text: string }
+type ChatMessage = { id: string; uid: string; name: string; text: string; createdAt: number | null }
 
 export function ChatBubble() {
   const { user } = useAuth()
@@ -19,33 +18,41 @@ export function ChatBubble() {
   const displayName = useMemo(() => user?.displayName || user?.email?.split("@")[0] || "Member", [user])
 
   useEffect(() => {
-    if (!user) return
-    const messagesQuery = query(collection(db, "chatMessages"), orderBy("createdAt", "asc"), limit(100))
-    return onSnapshot(messagesQuery, (snapshot) => {
-      setMessages(snapshot.docs.map((item) => ({ id: item.id, ...item.data() } as ChatMessage)))
-    }, () => setError("Chat is temporarily unavailable."))
-  }, [user])
+    if (!user || !open) return
+    let active = true
+    async function loadMessages() {
+      try {
+        const token = await auth.currentUser?.getIdToken()
+        if (!token) return
+        const response = await fetch("/api/chat", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" })
+        if (!response.ok) throw new Error()
+        const data = await response.json()
+        if (active) { setMessages(data.messages); setError(null) }
+      } catch { if (active) setError("Chat is temporarily unavailable.") }
+    }
+    void loadMessages()
+    const interval = window.setInterval(loadMessages, 4000)
+    return () => { active = false; window.clearInterval(interval) }
+  }, [user, open])
 
-  useEffect(() => {
-    if (open) endRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages, open])
+  useEffect(() => { if (open) endRef.current?.scrollIntoView({ behavior: "smooth" }) }, [messages, open])
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const message = text.trim()
     if (!user || !message || sending) return
-    setSending(true)
-    setError(null)
+    setSending(true); setError(null)
     try {
-      await addDoc(collection(db, "chatMessages"), { uid: user.uid, name: displayName, text: message, createdAt: serverTimestamp() })
+      const token = await auth.currentUser?.getIdToken()
+      const response = await fetch("/api/chat", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ text: message }) })
+      if (!response.ok) throw new Error()
+      const data = await response.json()
+      setMessages((current) => [...current, data.message])
       setText("")
-    } catch {
-      setError("Your message could not be sent.")
-    } finally { setSending(false) }
+    } catch { setError("Your message could not be sent.") } finally { setSending(false) }
   }
 
   if (!user) return null
-
   return <div className="fixed bottom-5 right-5 z-50 sm:bottom-6 sm:right-6">
     {open && <section aria-label="Community chat" className="mb-3 flex h-[min(520px,calc(100dvh-7rem))] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-card shadow-2xl shadow-black/40">
       <header className="flex items-center justify-between border-b border-white/10 px-4 py-3"><div className="flex items-center gap-2"><MessageCircle className="size-4 text-primary" /><div><h2 className="text-sm font-semibold text-white">Community chat</h2><p className="text-[11px] text-muted-foreground">Live AutoGrabber members</p></div></div><button type="button" onClick={() => setOpen(false)} aria-label="Close chat" className="rounded-lg p-2 text-muted-foreground hover:bg-white/5 hover:text-white"><X className="size-4" /></button></header>
