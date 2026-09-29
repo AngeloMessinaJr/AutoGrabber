@@ -1,6 +1,5 @@
 "use client"
 
-import { Bot } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 
@@ -10,7 +9,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-white/10 bg-background/85 backdrop-blur-xl">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_0_24px_oklch(0.82_0.13_205/0.25)]"><Bot className="size-5" /></span>
+          <span className="flex size-9 items-center justify-center overflow-hidden rounded-xl shadow-[0_0_24px_oklch(0.82_0.13_205/0.25)]"><img src="/autograbber-icon.svg" alt="AutoGrabber" className="size-full object-cover" /></span>
           <span className="font-semibold tracking-tight text-foreground">AutoGrabber</span>
         </Link>
         <div className="hidden md:block" aria-hidden="true" />
