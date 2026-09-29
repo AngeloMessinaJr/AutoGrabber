@@ -20,10 +20,9 @@ async function getProfile(uid: string, authUser: { name?: string; email?: string
 export async function GET(request: NextRequest) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 })
-  const channel = request.nextUrl.searchParams.get("channel") || "general"
   const [messageSnapshot, typingSnapshot] = await Promise.all([
-    adminDb.collection("chatMessages").where("channel", "==", channel).orderBy("createdAt", "asc").limitToLast(100).get(),
-    adminDb.collection("chatTyping").where("channel", "==", channel).where("updatedAt", ">", new Date(Date.now() - 7000)).get(),
+    adminDb.collection("chatMessages").orderBy("createdAt", "asc").limitToLast(100).get(),
+    adminDb.collection("chatTyping").where("updatedAt", ">", new Date(Date.now() - 7000)).get(),
   ])
   const typing = await Promise.all(typingSnapshot.docs.filter((doc) => doc.id !== user.uid).map(async (doc) => {
     const data = doc.data(); const profile = await getProfile(doc.id, {})
@@ -39,20 +38,19 @@ export async function POST(request: NextRequest) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 })
   const body = await request.json().catch(() => null)
-  const channel = typeof body?.channel === "string" ? body.channel : "general"
   if (body?.typing === true) {
-    await adminDb.collection("chatTyping").doc(`${channel}_${user.uid}`).set({ uid: user.uid, channel, updatedAt: new Date() })
+    await adminDb.collection("chatTyping").doc(user.uid).set({ updatedAt: new Date() })
     return NextResponse.json({ ok: true })
   }
   if (body?.typing === false) {
-    await adminDb.collection("chatTyping").doc(`${channel}_${user.uid}`).delete()
+    await adminDb.collection("chatTyping").doc(user.uid).delete()
     return NextResponse.json({ ok: true })
   }
   const text = typeof body?.text === "string" ? body.text.trim() : ""
   if (!text || text.length > 1000) return NextResponse.json({ error: "Message must be between 1 and 1,000 characters." }, { status: 400 })
   const profile = await getProfile(user.uid, user)
   const replyTo = typeof body?.replyTo?.id === "string" ? { id: body.replyTo.id, name: String(body.replyTo.name || "Member").slice(0, 100), text: String(body.replyTo.text || "").slice(0, 200) } : null
-  const message = { uid: user.uid, name: profile.name, avatarUrl: profile.avatarUrl, text, replyTo, channel, createdAt: new Date() }
+  const message = { uid: user.uid, name: profile.name, avatarUrl: profile.avatarUrl, text, replyTo, createdAt: new Date() }
   const reference = await adminDb.collection("chatMessages").add(message)
   await adminDb.collection("chatTyping").doc(user.uid).delete()
   return NextResponse.json({ message: { id: reference.id, ...message, createdAt: message.createdAt.getTime() } }, { status: 201 })
