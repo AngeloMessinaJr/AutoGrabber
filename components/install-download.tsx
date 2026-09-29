@@ -51,13 +51,13 @@ export function InstallDownload() {
             </span>
           </div>
           <div className="mt-auto pt-8">
-            <a
-              href="#"
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            <div
+              aria-disabled="true"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 py-3.5 text-sm font-semibold text-muted-foreground"
             >
               <Download className="size-4" aria-hidden="true" />
-              Download ~121 MB
-            </a>
+              Not Available
+            </div>
           </div>
         </div>
       </div>
