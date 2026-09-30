@@ -289,7 +289,7 @@ function SubscriptionPortal({ uid, hasLifetimeAccess }: { uid: string; hasLifeti
         <div>
           <div className="flex items-center gap-2 text-primary"><CreditCard className="size-4" aria-hidden="true" /><span className="text-xs font-semibold uppercase tracking-widest">Subscription</span></div>
           <h2 id="subscription-title" className="mt-2 text-xl font-semibold text-white">Lifetime access</h2>
-          <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">Unlock every AutoGrabber feature with one secure, one-time payment.</p>
+          <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">Unlock every feature with one secure, one-time payment.</p>
         </div>
         {hasLifetimeAccess ? (
           <div className="flex shrink-0 items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary"><Check className="size-4" aria-hidden="true" /> Active</div>
