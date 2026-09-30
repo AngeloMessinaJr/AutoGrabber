@@ -2,7 +2,7 @@
 
 import { doc, onSnapshot, setDoc } from "firebase/firestore"
 import { reload, sendEmailVerification } from "firebase/auth"
-import { AlertTriangle, Bot, Check, CreditCard, LogOut, Mail, Pencil, Phone, User as UserIcon, X } from "lucide-react"
+import { AlertTriangle, Check, CreditCard, LogOut, Mail, Pencil, Phone, User as UserIcon, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -130,7 +130,7 @@ function AccountContent() {
       <header className="border-b border-white/5 bg-neutral-900/70 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <Bot className="size-6 text-primary" aria-hidden="true" />
+            <span className="flex size-8 items-center justify-center overflow-hidden rounded-lg"><img src="/autograbber-icon.svg" alt="AutoGrabber" className="size-full object-cover" /></span>
             <span className="text-lg font-semibold tracking-tight text-white">AutoGrabber</span>
           </Link>
           <button
