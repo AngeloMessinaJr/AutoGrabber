@@ -127,19 +127,18 @@ function AccountContent() {
 
   return (
     <main className="min-h-dvh">
-      <header className="border-b border-white/5 bg-neutral-900/70 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 md:px-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center overflow-hidden rounded-lg"><img src="/autograbber-icon.svg" alt="AutoGrabber" className="size-full object-cover" /></span>
-            <span className="text-lg font-semibold tracking-tight text-white">AutoGrabber</span>
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 lg:px-8">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="flex size-9 items-center justify-center overflow-hidden rounded-xl shadow-[0_0_24px_oklch(0.82_0.13_205/0.25)]"><img src="/autograbber-icon.svg" alt="AutoGrabber" className="size-full object-cover" /></span>
+            <span className="font-semibold tracking-tight text-foreground">AutoGrabber</span>
           </Link>
           <button
             type="button"
             onClick={handleSignOut}
-            className="flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-white/80 transition-colors hover:bg-white/5"
+            className="rounded-lg border border-primary/60 px-4 py-2.5 text-xs font-bold tracking-widest text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
           >
-            <LogOut className="size-4" aria-hidden="true" />
-            Sign out
+            SIGN OUT
           </button>
         </div>
       </header>
