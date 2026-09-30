@@ -2,7 +2,7 @@
 
 import { doc, onSnapshot, setDoc } from "firebase/firestore"
 import { reload, sendEmailVerification } from "firebase/auth"
-import { AlertTriangle, Bot, Check, CreditCard, LogOut, Mail, Pencil, Phone, User as UserIcon, X } from "lucide-react"
+import { AlertTriangle, Check, CreditCard, LogOut, Mail, Pencil, Phone, User as UserIcon, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -29,14 +29,17 @@ function AccountContent() {
   const [editingField, setEditingField] = useState<"fullName" | "phoneNumber" | "profilePicture" | null>(null)
   const [verificationBusy, setVerificationBusy] = useState(false)
   const [emailVerified, setEmailVerified] = useState(false)
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null)
 
   async function handleVerifyEmail() {
     if (!user || user.emailVerified) return
     setVerificationBusy(true)
+    setVerificationMessage(null)
     try {
       await sendEmailVerification(user)
+      setVerificationMessage("Verification email sent. Check your inbox, then return and refresh your status.")
     } catch (error) {
-      console.error(authErrorMessage(error))
+      setVerificationMessage(authErrorMessage(error))
     } finally {
       setVerificationBusy(false)
     }
@@ -127,19 +130,18 @@ function AccountContent() {
 
   return (
     <main className="min-h-dvh">
-      <header className="border-b border-white/5 bg-neutral-900/70 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 md:px-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Bot className="size-6 text-primary" aria-hidden="true" />
-            <span className="text-lg font-semibold tracking-tight text-white">AutoGrabber</span>
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 lg:px-8">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="flex size-9 items-center justify-center overflow-hidden rounded-xl shadow-[0_0_24px_oklch(0.82_0.13_205/0.25)]"><img src="/autograbber-icon.svg" alt="AutoGrabber" className="size-full object-cover" /></span>
+            <span className="font-semibold tracking-tight text-foreground">AutoGrabber</span>
           </Link>
           <button
             type="button"
             onClick={handleSignOut}
-            className="flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-white/80 transition-colors hover:bg-white/5"
+            className="rounded-lg border border-primary/60 px-4 py-2.5 text-xs font-bold tracking-widest text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
           >
-            <LogOut className="size-4" aria-hidden="true" />
-            Sign out
+            SIGN OUT
           </button>
         </div>
       </header>
@@ -197,7 +199,7 @@ function AccountContent() {
             <div className="self-start w-full rounded-2xl border border-white/8 bg-card/60 p-5">
               <div className="flex items-center gap-2 text-muted-foreground"><span className="text-primary" aria-hidden="true"><Mail className="size-4" /></span><span className="text-xs font-medium uppercase tracking-wide">Email</span></div>
               <p className="mt-2 truncate text-sm font-medium text-white">{user.email || "—"}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1"><span className="text-xs text-muted-foreground">Verified: <span className="font-medium text-white">{emailVerified ? "Yes" : "No"}</span></span>{!emailVerified && <><button type="button" onClick={handleVerifyEmail} disabled={verificationBusy} className="text-xs font-semibold text-primary hover:underline disabled:opacity-60">{verificationBusy ? "Sending…" : "Verify email"}</button><button type="button" onClick={refreshVerificationStatus} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-white">Refresh status</button></>}</div>
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1"><span className="text-xs text-muted-foreground">Verified: <span className="font-medium text-white">{emailVerified ? "Yes" : "No"}</span></span>{!emailVerified && <><button type="button" onClick={handleVerifyEmail} disabled={verificationBusy} className="text-xs font-semibold text-primary hover:underline disabled:opacity-60">{verificationBusy ? "Sending…" : "Verify email"}</button><button type="button" onClick={refreshVerificationStatus} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-white">Refresh status</button></>}</div>{verificationMessage && <p role="status" className="mt-2 text-xs leading-5 text-muted-foreground">{verificationMessage}</p>}
             </div>
           </div>
         </div>
@@ -287,7 +289,7 @@ function SubscriptionPortal({ uid, hasLifetimeAccess }: { uid: string; hasLifeti
         <div>
           <div className="flex items-center gap-2 text-primary"><CreditCard className="size-4" aria-hidden="true" /><span className="text-xs font-semibold uppercase tracking-widest">Subscription</span></div>
           <h2 id="subscription-title" className="mt-2 text-xl font-semibold text-white">Lifetime access</h2>
-          <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">Unlock every AutoGrabber feature with one secure, one-time payment.</p>
+          <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">Unlock every feature with one secure, one-time payment.</p>
         </div>
         {hasLifetimeAccess ? (
           <div className="flex shrink-0 items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary"><Check className="size-4" aria-hidden="true" /> Active</div>
